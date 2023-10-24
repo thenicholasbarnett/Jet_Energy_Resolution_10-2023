@@ -1,2 +1,4 @@
 # Jet_Energy_Resolution_10-2023
-Code that interacts with lxplus server to find jet energy resolution for the leading jets in events with specific event selections
+Code that interacts with lxplus server to find jet energy resolution for the leading jets in events with specific event selections.
+When signed into and staged, or cd, at the initial login to the lxplus email where when executing ls public and private folders show up. Using one of the text files mentioned in the code's only while loop, located in the public folder, this code iterates through a list of files in the files path of interest. Currently this code prints out JER vs refpt, slices of JER pertaining to the bins of refpt, and the standard deviation and mean of each slice histogram vs refpt.
+filenamesAll.txt is the names of all the files in the file path, filenames50.txt is the names of the first fifty files listed in filenamesAll.txt, and filenames100.txt is the same as filenames50.txt with the first hundred files listed.
