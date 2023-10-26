@@ -38,6 +38,23 @@ void ploth1d_1(TH1D *h, TString xtitle, TString ytitle, TString htitle){
     if(xtitle != "pt"){h_c->GetXaxis()->SetTitle(xtitle);}
 }
 
+void ploth1d_1_s(TH1D *h, TString xtitle, TString htitle, int num){
+    TCanvas *c = new TCanvas();
+    c->cd();
+    c->SetTitle(htitle);
+    TH1D *h_c = (TH1D*)h->Clone(htitle);
+    h_c->Draw("e1p");
+    h_c->SetMarkerStyle(20);
+    h_c->SetMarkerColor(kBlack);
+    h_c->SetLineColor(kBlack);
+    h_c->GetXaxis()->CenterTitle(true);
+    h_c->GetYaxis()->SetTitle("Probability");
+    h_c->GetYaxis()->CenterTitle(true);
+    h_c->GetXaxis()->SetTitle(xtitle);
+    if(xtitle == "Leading p_{T}^{jet}/p_{T}^{ref}"){c->SaveAs(Form("plots/leadingjets_slice%d.png",num));}
+    if(xtitle == "All p_{T}^{jet}/p_{T}^{ref}"){c->SaveAs(Form("plots/alljets_slice%d.png",num));}
+}
+
 void ploth2d_1(TH2D *h, TString xtitle, TString ytitle, TString htitle, TString option){
     TCanvas *c = new TCanvas();
     c->cd();
@@ -63,8 +80,10 @@ void ploth1d_2(TH1D *h0, TString h0name, TH1D *h1, TString h1name, TString xtitl
     TCanvas *c = new TCanvas();
     c->cd();
     c->SetTitle(htitle);
-    // h0
+    // cloning h0 and h1
     TH1D *h0_c = (TH1D*)h0->Clone(h1name);
+    TH1D *h1_c = (TH1D*)h1->Clone(h1name);
+    // h0
     h0_c->Draw("e1p");
     h0_c->SetMarkerStyle(20);
     h0_c->SetMarkerColor(kBlack);
@@ -73,12 +92,25 @@ void ploth1d_2(TH1D *h0, TString h0name, TH1D *h1, TString h1name, TString xtitl
     h0_c->GetXaxis()->CenterTitle(true);
     h0_c->GetYaxis()->SetTitle(ytitle);
     h0_c->GetYaxis()->CenterTitle(true);
+    // changing the y axis if needed
+    int maxbin0 = h0_c->GetMaximumBin();
+    int maxbin1 = h1_c->GetMaximumBin();
+    int minbin0 = h0_c->GetMinimumBin();
+    int minbin1 = h1_c->GetMinimumBin();
+    Double_t topmaxbin0 = h0_c->GetYaxis()->GetBinUpEdge(maxbin0);
+    Double_t topmaxbin1 = h1_c->GetYaxis()->GetBinUpEdge(maxbin1);
+    Double_t bottomminbin0 = h0_c->GetYaxis()->GetBinLowEdge(minbin0);
+    Double_t bottomminbin1 = h1_c->GetYaxis()->GetBinLowEdge(minbin1);
+    if(topmaxbin0>topmaxbin1){h0_c->SetMaximum(1.2*topmaxbin0);}
+    if(topmaxbin0<topmaxbin1){h0_c->SetMaximum(1.2*topmaxbin1);}
+    if(bottomminbin0>bottomminbin1){h0_c->SetMinimum(1.2*bottomminbin1);}
+    if(bottomminbin0<bottomminbin1){h0_c->SetMinimum(1.2*bottomminbin0);}
+    // setting the x axis title
     if(xtitle == "pt"){
         h0_c->GetXaxis()->SetTitle("P_{T} [GeV/c]");    
         c->SetLogy();}
     if(xtitle != "pt"){h0_c->GetXaxis()->SetTitle(xtitle);}
     // h1
-    TH1D *h1_c = (TH1D*)h1->Clone(h1name);
     h1_c->Draw("e1psame");
     h1_c->SetMarkerStyle(21);
     h1_c->SetMarkerColor(kRed);
@@ -159,7 +191,7 @@ void plotg1d_2(TGraph *h0, TString h0name, TGraph *h1, TString h1name, TString x
     TGraph *h0_c = (TGraph*)h0->Clone(htitle);
     TGraph *h1_c = (TGraph*)h1->Clone(htitle);
     // h0
-    h0_c->Draw("apl");
+    h0_c->Draw("ap");
     h0_c->SetTitle("");
     h0_c->SetMarkerStyle(20);
     h0_c->SetMarkerColor(kBlack);
@@ -173,7 +205,7 @@ void plotg1d_2(TGraph *h0, TString h0name, TGraph *h1, TString h1name, TString x
     }
     if(xtitle != "pt"){h0_c->GetXaxis()->SetTitle(xtitle);}
     // h1
-    h1_c->Draw("pl same");
+    h1_c->Draw("p same");
     h1_c->SetMarkerStyle(21);
     h1_c->SetMarkerColor(kRed);
     h1_c->SetLineColor(kRed);
@@ -199,8 +231,22 @@ void getthesliceinfo(TH1D *h, int in, Double_t sl[4][11]){
     sl[3][in] = h->GetMeanError();
 }
 
+// void fillslice(Float_t a, Float_t b, Float_t c, TString d){
+//     if((a>80) && (a<90)){hslice0->Fill(b,c);}
+//     if((a>90) && (a<100)){hslice1->Fill(b,c);}
+//     if((a>100) && (a<110)){hslice2->Fill(b,c);}
+//     if((a>110) && (a<120)){hslice3->Fill(b,c);}
+//     if((a>120) && (a<130)){hslice4->Fill(b,c);}
+//     if((a>130) && (a<140)){hslice5->Fill(b,c);}
+//     if((a>140) && (a<150)){hslice6->Fill(b,c);}
+//     if((a>150) && (a<180)){hslice7->Fill(b,c);}
+//     if((a>180) && (a<220)){hslice8->Fill(b,c);}
+//     if((a>220) && (a<300)){hslice9->Fill(b,c);}
+//     if((a>300) && (a<500)){hslice10->Fill(b,c);}
+// }
+
 // the script all runs in this function
-void JER_A()
+void JER_Current()
 {
     // determining the inital time of the script
     clock_t ti = clock();
@@ -222,7 +268,7 @@ void JER_A()
     const Int_t bin2 = 12;
     double pth1d2[bin2+1] = {80,90,100,110,120,130,140,150,180,220,300,500};
     // making binning parameters for the normalized jer values
-    double jerh1d0[3] = {10000,-1.2,1.2};
+    double jerh1d0[3] = {150,0,2};
 
     // unweighted parameters
     // TH1D *hvzuw = new TH1D("vz_unweighted","",vzh1d0[0],vzh1d0[1],vzh1d0[2]);
@@ -238,6 +284,7 @@ void JER_A()
     TH1D *hjtpt = new TH1D("hjtpt","",pth1d0[0],pth1d0[1],pth1d0[2]);
     TH1D *hrefpt = new TH1D("hrefpt","",pth1d0[0],pth1d0[1],pth1d0[2]);
     TH1D *hjer = new TH1D("hjer","",bin2,pth1d2);
+    TH1D *hljer = new TH1D("hljer","",bin2,pth1d2);
     // TH1D *hjer = new TH1D("hjer","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
     TH2D *hjerref = new TH2D("hjerref","",pth1d0[0],pth1d0[1],pth1d0[2],jerh1d0[0],jerh1d0[1],jerh1d0[2]);
     TH2D *hjerjt = new TH2D("hjerjt","",pth1d0[0],pth1d0[1],pth1d0[2],jerh1d0[0],jerh1d0[1],jerh1d0[2]);
@@ -246,11 +293,10 @@ void JER_A()
     TH1D *hrawpt = new TH1D("hrawpt","",bin2,pth1d2);
     TH1D *htrackMax = new TH1D("htrackMax","",bin2,pth1d2);
     TH1D *hratio = new TH1D("hratio","",ratio1d0[0],ratio1d0[1],ratio1d0[2]);
-    TH1D *hjteta = new TH1D("hjteta","",etah1d0[0],etah1d0[1],etah1d0[2]);
+    TH1D *hjteta = new TH1D("hjteta","",etah1d1[0],etah1d1[1],etah1d1[2]);
     TH1D *hjteta_uc = new TH1D("hjteta_uc","",etah1d0[0],etah1d0[1],etah1d0[2]);
     
-
-    // making slice plots
+    // making slice plots with all jets
     TH1D *hslice0 = new TH1D("slice 0","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
     TH1D *hslice1 = new TH1D("slice 1","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
     TH1D *hslice2 = new TH1D("slice 2","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
@@ -263,18 +309,31 @@ void JER_A()
     TH1D *hslice9 = new TH1D("slice 9","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
     TH1D *hslice10 = new TH1D("slice 10","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
 
+    // making slice plots with leading jets
+    TH1D *hlslice0 = new TH1D("leading slice 0","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
+    TH1D *hlslice1 = new TH1D("leading slice 1","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
+    TH1D *hlslice2 = new TH1D("leading slice 2","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
+    TH1D *hlslice3 = new TH1D("leading slice 3","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
+    TH1D *hlslice4 = new TH1D("leading slice 4","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
+    TH1D *hlslice5 = new TH1D("leading slice 5","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
+    TH1D *hlslice6 = new TH1D("leading slice 6","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
+    TH1D *hlslice7 = new TH1D("leading slice 7","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
+    TH1D *hlslice8 = new TH1D("leading slice 8","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
+    TH1D *hlslice9 = new TH1D("leading slice 9","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
+    TH1D *hlslice10 = new TH1D("leading slice 10","",jerh1d0[0],jerh1d0[1],jerh1d0[2]);
+
     // a_ and b_ are the number of total events and accepted events respectively
     // n is the number of files that were looked at
     // tw is the total weight to normalize histograms with
     // tu is the total unweighted to normalize hists with
-    Float_t a_=0, b_=0, n=0, tw=0, tu=0, nc=0, oc=0;
+    Float_t a_=0, b_=0, n=0, tw=0;
 
     // open files.txt to see the names of the files
-    // ifstream myfile("public/filenamesAll.txt");
-    // ifstream myfile("public/filenames50.txt");
+    ifstream myfile("public/filenamesAll.txt");
     // ifstream myfile("public/filenames100.txt");
-    ifstream myfile("files1.txt");
-    // ifstream myfile("files.txt");
+    // ifstream myfile("public/filenames50.txt");
+    // ifstream myfile("filenames6.txt");
+    // ifstream myfile("filenames1.txt");
     string filename;
 
     // loop over the files by file names
@@ -284,18 +343,18 @@ void JER_A()
         n+=1;
 
         // turning the string filename into a TString so it passes through TFile
-        TString q = filename;
-        // TString q = "/eos/cms/store/group/phys_heavyions/jviinika/ppMC2017_5p02TeV_ptHat15_Dijet_Pythia8CP5_RunIIpp5Spring18DR_AOD_94X_allFiles_2023-01-05/0000/"+filename;
+        TString q = "/eos/cms/store/group/phys_heavyions/jviinika/ppMC2017_5p02TeV_ptHat15_Dijet_Pythia8CP5_RunIIpp5Spring18DR_AOD_94X_allFiles_2023-01-05/0000/"+filename;
+        // TString q = filename;
 
         cout<<q<<endl;
         
         // pointing fi0 and fi1 to the files holding the data of interest
         TFile *fi = TFile::Open(q,"read");
-        fi->cd();
 
         // declaring variables
         int pPApVF, HBHENFRR2L, pBSF, HLT_HIAKCJ80v1;
-        float vz, w;
+        Float_t vz, w; 
+        // Float_t ngen, nref;
         Float_t pthat;
         const Int_t nm = 200000;
         Float_t genpt[nm];
@@ -304,6 +363,10 @@ void JER_A()
         Float_t rawpt[nm];
         Float_t trackMax[nm];
         Float_t jteta[nm];
+        // Float_t ngen[nm];
+        // Float_t nref[nm];
+        Int_t ngen;
+        Int_t nref;
 
         // getting HltTree from fi, and the appropriate branches
         TTree *t0 = (TTree*)fi->Get("skimanalysis/HltTree");
@@ -329,10 +392,16 @@ void JER_A()
         t3->SetBranchAddress("rawpt",rawpt);
         t3->SetBranchAddress("trackMax",trackMax);
         t3->SetBranchAddress("jteta",jteta);
+        t3->SetBranchAddress("ngen",&ngen);
+        t3->SetBranchAddress("nref",&nref);
+
+        // making a ttreereader 
+        // TTreeReader treereader0(t3);
+        // TTreeReaderArray<float> refpt = {treereader0, "refpt"};
 
         // for loop for events in trees t0, t1, and t2
         for(unsigned int i=0; i<t0->GetEntries(); i++)
-        // for(unsigned int i=0; i<20; i++)
+        // for(unsigned int i=0; i<20; i+)
         {
             // getting the entries
             t0->GetEntry(i);
@@ -343,9 +412,6 @@ void JER_A()
             // adding one to total events for every event
             a_+=1;
 
-            // making trackmax/rawpt
-            Double_t ratio = trackMax[0]/rawpt[0];
-
             // some print statements to see the trackMax and rawpt values
             // if(i<100){
             //     cout << "trackMax[0] is " << trackMax[0] << endl;
@@ -355,91 +421,121 @@ void JER_A()
 
             // only events with |vz|<15 and all the triggers of interest are passed
             // if((TMath::Abs(vz)<15)&&(pPApVF==1)&&(HBHENFRR2L==1)&&(pBSF==1)&&(HLT_HIAKCJ80v1==1)&&(pthat>15)&&(refpt[0]>80)&&(TMath::Abs(jteta[0])<1.6)){
-            if((TMath::Abs(vz)<15)&&(pPApVF==1)&&(HBHENFRR2L==1)&&(pBSF==1)&&(HLT_HIAKCJ80v1==1)&&(pthat>15)&&(refpt[0]>80)){
-            // if((TMath::Abs(vz)<15)&&(pPApVF==1)&&(HBHENFRR2L==1)&&(pBSF==1)&&(HLT_HIAKCJ80v1==1)&&(pthat>15)&&(0.01<ratio)&&(ratio<0.98)){
+            if((TMath::Abs(vz)<15)&&(pPApVF==1)&&(HBHENFRR2L==1)&&(pBSF==1)&&(HLT_HIAKCJ80v1==1)&&(pthat>15)){
                 
-                // event count without new cut
-                // oc +=1;
+                // adding one to passed events iff all the conditionals are true
+                b_+=1;
+                
+                // adding the weight for the event to the to total weight
+                tw+=w;
+            
+                // filling histograms that have variables with one value per event
+                // hvzuw->Fill(vz);
+                hvz->Fill(vz,w);
+                // hpthatuw->Fill(pthat);
+                hpthat->Fill(pthat,w);
 
-                hjteta_uc->Fill(jteta[0],w);
+                // leading jet JER
+                Float_t ljer = (jtpt[0]/refpt[0]);
+                hljer->Fill(ljer,w);
 
-                //event count with new cut
-                // nc +=1;
-
-                if(TMath::Abs(jteta[0])<1.6){
+                // // tring to fill slice hists with a function
+                // fillslice();
+                
+                // filling the slices for leading jets
+                // slice 0
+                if((refpt[0]>80) && (refpt[0]<90)){hlslice0->Fill(ljer,w);}
+                // slice 1
+                if((refpt[0]>90) && (refpt[0]<100)){hlslice1->Fill(ljer,w);}
+                // slice 2
+                if((refpt[0]>100) && (refpt[0]<110)){hlslice2->Fill(ljer,w);}
+                // slice 3
+                if((refpt[0]>110) && (refpt[0]<120)){hlslice3->Fill(ljer,w);}
+                // slice 4
+                if((refpt[0]>120) && (refpt[0]<130)){hlslice4->Fill(ljer,w);}
+                // slice 5
+                if((refpt[0]>130) && (refpt[0]<140)){hlslice5->Fill(ljer,w);}
+                // slice 6
+                if((refpt[0]>140) && (refpt[0]<150)){hlslice6->Fill(ljer,w);}
+                // slice 7
+                if((refpt[0]>150) && (refpt[0]<180)){hlslice7->Fill(ljer,w);}
+                // slice 8
+                if((refpt[0]>180) && (refpt[0]<220)){hlslice8->Fill(ljer,w);}
+                // slice 9
+                if((refpt[0]>220) && (refpt[0]<300)){hlslice9->Fill(ljer,w);}
+                // slice 10
+                if((refpt[0]>300) && (refpt[0]<500)){hlslice10->Fill(ljer,w);}
+                
+                // looping through all jets in each event
+                for(unsigned int j=0; j<nref; j++){
                     
-                    // adding one to passed events iff all the conditionals are true
-                    b_+=1;
+                    // making trackmax/rawpt
+                    Double_t ratio = trackMax[j]/rawpt[j];
 
-                    // calculating the total weight by adding each weight to it
-                    tw+=w;
-                    tu+=1;
+                    // eta cut
+                    if((TMath::Abs(jteta[j])<1.6)&&(refpt[j]>80)&&(0.01<ratio)&&(ratio<0.98)){
+                        
+                        // filling histograms that have variables with more than one value per event
+                        // hgenpt->Fill(genpt[j],w);
+                        // hgenptuw->Fill(genpt[0]);
+                        hjtpt->Fill(jtpt[j],w);
+                        // hjtptuw->Fill(jtpt[0]);
+                        hrefpt->Fill(refpt[j],w);
 
-                    // filling the vz, w, and pthat histograms
-                    // hvzuw->Fill(vz);
-                    hvz->Fill(vz,w);
-                    // hpthatuw->Fill(pthat);
-                    hpthat->Fill(pthat,w);
+                        // filling jet energy resolution
+                        double jer = (jtpt[j]/refpt[j]);
+                        hjer->Fill(jer,w);
+                        // hjeruw->Fill(jer);
+                        hjerref->Fill(refpt[j],jer,w);
+                        hjerjt->Fill(jtpt[j],jer,w);
+                        hjteta->Fill(jteta[j],w);
 
-                    // filling genpt, jtpt, and refpt
-                    hgenpt->Fill(genpt[0],w);
-                    // hgenptuw->Fill(genpt[0]);
-                    hjtpt->Fill(jtpt[0],w);
-                    // hjtptuw->Fill(jtpt[0]);
-                    hrefpt->Fill(refpt[0],w);
+                        // filling hists
+                        // if((rawpt[i]>80)&&(rawpt[i]<500)&&(trackMax[0]>80)&&(trackMax[0]<500)){
+                        //     hrawpt->Fill(rawpt[0],w);
+                        //     htrackMax->Fill(trackMax[0],w);
+                        //     hratio->Fill(ratio,w);
+                        // }
 
-                    // filling jet energy resolution
-                    double jer = (jtpt[0] - refpt[0])/refpt[0];
-                    hjer->Fill(jer,w);
-                    // hjeruw->Fill(jer);
-                    hjerref->Fill(refpt[0],jer,w);
-                    hjerjt->Fill(jtpt[0],jer,w);
-                    hjteta->Fill(jteta[0],w);
+                        // filling the slices for all jets
+                        // slice 0
+                        if((refpt[j]>80) && (refpt[j]<90)){hslice0->Fill(jer,w);}
+                        // slice 1
+                        if((refpt[j]>90) && (refpt[j]<100)){hslice1->Fill(jer,w);}
+                        // slice 2
+                        if((refpt[j]>100) && (refpt[j]<110)){hslice2->Fill(jer,w);}
+                        // slice 3
+                        if((refpt[j]>110) && (refpt[j]<120)){hslice3->Fill(jer,w);}
+                        // slice 4
+                        if((refpt[j]>120) && (refpt[j]<130)){hslice4->Fill(jer,w);}
+                        // slice 5
+                        if((refpt[j]>130) && (refpt[j]<140)){hslice5->Fill(jer,w);}
+                        // slice 6
+                        if((refpt[j]>140) && (refpt[j]<150)){hslice6->Fill(jer,w);}
+                        // slice 7
+                        if((refpt[j]>150) && (refpt[j]<180)){hslice7->Fill(jer,w);}
+                        // slice 8
+                        if((refpt[j]>180) && (refpt[j]<220)){hslice8->Fill(jer,w);}
+                        // slice 9
+                        if((refpt[j]>220) && (refpt[j]<300)){hslice9->Fill(jer,w);}
+                        // slice 10
+                        if((refpt[j]>300) && (refpt[j]<500)){hslice10->Fill(jer,w);}
 
-                    // filling hists
-                    if((rawpt[0]>80)&&(rawpt[0]<500)&&(trackMax[0]>80)&&(trackMax[0]<500)){
-                        hrawpt->Fill(rawpt[0],w);
-                        htrackMax->Fill(trackMax[0],w);
-                        hratio->Fill(ratio,w);
+                        // PRINT STATEMENTS
+                        // int lol= a_;
+                        // if(lol%50000==0){
+                        // cout << jer*w << " = jer * w, pthat is " << pthat << " and jer*w/tw = " << jer*w/tw << endl;
+                        // cout << jer << " is jer, w is " << w << endl;
+                        //     // cout << "genpt size is " << genpt.GetSize() << endl;
+                        //     // cout << "jtpt size is " << jtpt.GetSize() << endl;
+                        //     // cout << "jtpt[0] is " << jtpt[0] << endl;
+                        //     // cout << "the number of t3 events is " << t3->GetEntries() << endl;
+                        // }
                     }
-
-                    // filling the slices
-                    // slice 0
-                    if((refpt[0]>80) && (refpt[0]<90)){hslice0->Fill(jer,w);}
-                    // slice 1
-                    if((refpt[0]>90) && (refpt[0]<100)){hslice1->Fill(jer,w);}
-                    // slice 2
-                    if((refpt[0]>100) && (refpt[0]<110)){hslice2->Fill(jer,w);}
-                    // slice 3
-                    if((refpt[0]>110) && (refpt[0]<120)){hslice3->Fill(jer,w);}
-                    // slice 4
-                    if((refpt[0]>120) && (refpt[0]<130)){hslice4->Fill(jer,w);}
-                    // slice 5
-                    if((refpt[0]>130) && (refpt[0]<140)){hslice5->Fill(jer,w);}
-                    // slice 6
-                    if((refpt[0]>140) && (refpt[0]<150)){hslice6->Fill(jer,w);}
-                    // slice 7
-                    if((refpt[0]>150) && (refpt[0]<180)){hslice7->Fill(jer,w);}
-                    // slice 8
-                    if((refpt[0]>180) && (refpt[0]<220)){hslice8->Fill(jer,w);}
-                    // slice 9
-                    if((refpt[0]>220) && (refpt[0]<300)){hslice9->Fill(jer,w);}
-                    // slice 10
-                    if((refpt[0]>300) && (refpt[0]<500)){hslice10->Fill(jer,w);}
-
-                    // PRINT STATEMENTS
-                    // int lol= a_;
-                    // if(lol%50000==0){
-                    // cout << jer*w << " = jer * w, pthat is " << pthat << " and jer*w/tw = " << jer*w/tw << endl;
-                    // cout << jer << " is jer, w is " << w << endl;
-                    //     // cout << "genpt size is " << genpt.GetSize() << endl;
-                    //     // cout << "jtpt size is " << jtpt.GetSize() << endl;
-                    //     // cout << "jtpt[0] is " << jtpt[0] << endl;
-                    //     // cout << "the number of t3 events is " << t3->GetEntries() << endl;
-                    // }
                 }   
             }
         }
+        fi->Close();
     }
 
     // some print statements
@@ -447,9 +543,9 @@ void JER_A()
     // cout << ps << " percent of the event counts survided the 0.01<trackMax/rawpt<0.98 cut" << endl;
     // cout << ps << " percent of the event counts survided the new cuts" << endl;
 
-    TH1D *hjteta_c = (TH1D*)hjteta->Clone("hjteta_c");
-    double hjteta_uc_w = hjteta_uc->Integral();
-    hjteta_c->Scale(1/hjteta_uc_w);
+    // TH1D *hjteta_c = (TH1D*)hjteta->Clone("hjteta_c");
+    // double hjteta_uc_w = hjteta_uc->Integral();
+    // hjteta_c->Scale(1/hjteta_uc_w);
 
     // normalizing the weighted histograms with the total weights
     // hvz->Scale(1/tw);
@@ -486,8 +582,9 @@ void JER_A()
     normalizeh(hratio);
     normalizeh(hjteta);
     normalizeh(hjteta_uc);
+    normalizeh(hljer);
 
-    // normalizing the slice histograms
+    // normalizing the slice histograms for all jets
     normalizeh(hslice0);
     normalizeh(hslice1);
     normalizeh(hslice2);
@@ -499,6 +596,19 @@ void JER_A()
     normalizeh(hslice8);
     normalizeh(hslice9);
     normalizeh(hslice10);
+    
+    // normalizing the slice histograms for leading jets
+    normalizeh(hlslice0);
+    normalizeh(hlslice1);
+    normalizeh(hlslice2);
+    normalizeh(hlslice3);
+    normalizeh(hlslice4);
+    normalizeh(hlslice5);
+    normalizeh(hlslice6);
+    normalizeh(hlslice7);
+    normalizeh(hlslice8);
+    normalizeh(hlslice9);
+    normalizeh(hlslice10);
 
     // // double checking the hists are normalized with print statements 
     // cout << "hslice0 integral is " << hslice0->Integral() << endl;
@@ -508,10 +618,13 @@ void JER_A()
     // cout << "trackMax/rawpt integral is " << hratio->Integral() << endl;
     // cout << htrackMax->Integral() << endl;
 
-    // making the 2d plot of standard deviation and mean of jer per bin as a function of refpt
+    // making the 2d plot of standard deviation and mean of jer per bin as a function of refpt for all jets
     Double_t SlicesStdDevs[bin2-1], SlicesMeans[bin2-1], SlicesStdDevErrs[bin2-1], SlicesMeanErrs[bin2-1], sliceinfo[4][bin2-1];
 
-    // using a function to get all the important info
+    // making the 2d plot of standard deviation and mean of jer per bin as a function of refpt for leading jets
+    Double_t LSlicesStdDevs[bin2-1], LSlicesMeans[bin2-1], LSlicesStdDevErrs[bin2-1], LSlicesMeanErrs[bin2-1], Lsliceinfo[4][bin2-1];
+
+    // using a function to get all the important info for all jets
     getthesliceinfo(hslice0, 0, sliceinfo);
     getthesliceinfo(hslice1, 1, sliceinfo);
     getthesliceinfo(hslice2, 2, sliceinfo);
@@ -524,11 +637,31 @@ void JER_A()
     getthesliceinfo(hslice9, 9, sliceinfo);
     getthesliceinfo(hslice10, 10, sliceinfo);
 
+    // using a function to get all the important info for leading jets
+    getthesliceinfo(hlslice0, 0, Lsliceinfo);
+    getthesliceinfo(hlslice1, 1, Lsliceinfo);
+    getthesliceinfo(hlslice2, 2, Lsliceinfo);
+    getthesliceinfo(hlslice3, 3, Lsliceinfo);
+    getthesliceinfo(hlslice4, 4, Lsliceinfo);
+    getthesliceinfo(hlslice5, 5, Lsliceinfo);
+    getthesliceinfo(hlslice6, 6, Lsliceinfo);
+    getthesliceinfo(hlslice7, 7, Lsliceinfo);
+    getthesliceinfo(hlslice8, 8, Lsliceinfo);
+    getthesliceinfo(hlslice9, 9, Lsliceinfo);
+    getthesliceinfo(hlslice10, 10, Lsliceinfo);
+
     for(unsigned int i=0; i<11; i++){
         SlicesStdDevs[i] = sliceinfo[0][i];
         SlicesMeans[i] = sliceinfo[1][i];
         SlicesStdDevErrs[i] = sliceinfo[2][i];
         SlicesMeanErrs[i] = sliceinfo[3][i];
+    }
+
+    for(unsigned int i=0; i<11; i++){
+        LSlicesStdDevs[i] = Lsliceinfo[0][i];
+        LSlicesMeans[i] = Lsliceinfo[1][i];
+        LSlicesStdDevErrs[i] = Lsliceinfo[2][i];
+        LSlicesMeanErrs[i] = Lsliceinfo[3][i];
     }
 
     // plotting the stddev and mean as a function of refpt
@@ -541,20 +674,40 @@ void JER_A()
     }
 
     // making graphs out of the slice info
+    // original graphs, all jets
     TGraph *gslicestddev0 = new TGraphErrors(bin2-1,xax,SlicesStdDevs,xaxerr,SlicesStdDevErrs);
     TGraph *gslicemean0 = new TGraphErrors(bin2-1,xax,SlicesMeans,xaxerr,SlicesMeanErrs);
     gslicemean0->SetMinimum(0);
-    gslicemean0->SetMaximum(0.11);
+    gslicemean0->SetMaximum(0.12);
     gslicemean0->GetXaxis()->SetLimits(80,500);
+    // copies of graphs with modifications, all jets
     TGraph *gslicestddev1 = new TGraph(bin2-1,xax,SlicesStdDevs);
+    gslicestddev1->SetMinimum(0.07);
+    gslicestddev1->SetMaximum(0.125);
     TGraph *gslicemean1 = new TGraph(bin2-1,xax,SlicesMeans);
+    TGraph *gslicemean2 = (TGraph*)gslicemean0->Clone("Mean of JER");
+    gslicemean2->SetMaximum(1.05);
+    gslicemean2->SetMinimum(0.95);
+    
+    // original graphs, leading jets only
+    TGraph *glslicestddev0 = new TGraphErrors(bin2-1,xax,LSlicesStdDevs,xaxerr,LSlicesStdDevErrs);
+    TGraph *glslicemean0 = new TGraphErrors(bin2-1,xax,LSlicesMeans,xaxerr,LSlicesMeanErrs);
+    // copies with different axes and what not, leading jets only
+    TGraph *glslicestddev1 = (TGraph*)glslicestddev0->Clone("Std. Dev. of LJER");
+    glslicestddev1->SetMinimum(0.06);
+    glslicestddev1->SetMaximum(0.12);
+    glslicestddev1->GetXaxis()->SetLimits(80,500);
+    TGraph *glslicemean1 = (TGraph*)glslicemean0->Clone("Mean of LJER");
+    glslicemean1->SetMaximum(1.07);
+    glslicemean1->SetMinimum(0.97);
 
     // PLOTTING
     //
     // getting rid of boxes of stats in plots
-    gStyle->SetOptStat(0);
+    // gStyle->SetOptStat(0);
 
-    // important parameter plots
+    // important histogram plots
+    //
     // ploth1d_1(hrawpt, "rawpt", "Probability", "rawpt");
     // ploth1d_1(htrackMax, "trackMax", "Probability", "trackMax");
     // ploth1d_1(hratio, "trackMax/rawpt", "Probability", "trackMax/rawpt");
@@ -564,44 +717,16 @@ void JER_A()
     // ploth1d_2(hjteta_uc, "uncut jteta", hjteta_c, "cut jteta", "#eta", "Probability", "#eta^{jet} before and after #eta cut, normalized with precut scaling");
 
     // important graph plots
-    // plotg1d_1(gslicestddev0, "P_{T}^{ref}", "Std. Dev. of JER", "Standard Deviation of JER vs P_{T}");
-    // plotg1d_1(gslicemean0, "P_{T}^{ref}", "Mean of JER", "Mean of JER vs pT");
-    plotg1d_2(gslicemean0, "Mean", gslicestddev0, "Std. Dev.", "P_{T}^{ref} [GeV/c]", "JER Probability", "Mean & Std. Dev. of JER vs pT");
-
-    // TH1D *hslicestddev = new TH1D("hslicestddev","",bin2,pth1d2);
-    // TH1D *hslicemean = new TH1D("hslicemean","",bin2,pth1d2);
-    // for(unsigned int i=0; i<(bin2-1); i++){
-    //     double s = (pth1d2[i]+pth1d2[i+1])/2;
-    //     hslicestddev->Fill(s);
-    //     hslicestddev->Fill(s);
-    // }
-
-    // // determining hjer min and max
-    // int hjermaxbin = hjer->GetMaximumBin();
-    // double hjermaxc = hjer->GetYaxis()->GetBinCenter(hjermaxbin);
-    // double hjermaxu = hjer->GetYaxis()->GetBinUpEdge(hjermaxbin);
-    // double hjermaxl = hjer->GetYaxis()->GetBinLowEdge(hjermaxbin);
-    // int hjerminbin = hjer->GetMinimumBin();
-    // double hjerminc = hjer->GetYaxis()->GetBinCenter(hjermaxbin);
-    // double hjerminl = hjer->GetYaxis()->GetBinLowEdge(hjermaxbin);
-    // double hjerminu = hjer->GetYaxis()->GetBinUpEdge(hjermaxbin);
-
-    // PRINT STATEMENTS
-    // // expressing passed/total as a percent
-    // float p = b_/a_*100;
     //
-    // // printing out the info of interest
-    // cout<<"the following values were found by looking through "<< n << " root files" << endl;
-    // cout<<"number of total events: "<< a_ << endl;
-    // cout<<"number of passed events: "<< b_ << endl;
-    // cout<<"percent of passed events: "<< p <<"%"<< endl;
-
-    // common plots
-    //
-    ploth2d_1(hjerref, "P^{ref}_{T} [GeV/c]", "JER", "Jet Energy Resolution vs refpt", "COLZ");
-    // ploth1d_1(hjer, "Jet Energy Resolution ", "Probability", "Jet Energy Resolution  ");
+    // plotg1d_1(gslicestddev0, "P_{T}^{ref} [GeV/c]", "#sigma(p_{T}^{jet}/p_{T}^{ref})", "Standard Deviation of JER vs P_{T}");
+    // plotg1d_1(gslicemean2, "P_{T}^{ref} [GeV/c]", "#mu(p_{T}^{jet}/p_{T}^{ref})", "Mean of JER vs pT");
+    // plotg1d_1(glslicestddev0, "P_{T}^{ref} [GeV/c]", "#sigma(p_{T}^{jet}/p_{T}^{ref})", "Standard Deviation of JER vs P_{T}, leading");
+    // plotg1d_1(glslicemean0, "P_{T}^{ref} [GeV/c]", "#mu(p_{T}^{jet}/p_{T}^{ref})", "Mean of JER vs pT, leading");
+    // plotg1d_2(gslicemean0, "Mean", gslicestddev0, "Std. Dev.", "P_{T}^{ref} [GeV/c]", "p_{T}^{jet}/p_{T}^{ref}", "Mean & Std. Dev. of JER vs pT");
+    // plotg1d_2(glslicemean1, "Leading Jets", gslicemean0, "All Jets", "P_{T}^{ref} [GeV/c]", "#mu(p_{T}^{jet}/p_{T}^{ref})", "Mean of JER vs pT, for all and leading jets");
+    // plotg1d_2(glslicestddev1, "Leading Jets", gslicestddev0, "All Jets", "P_{T}^{ref} [GeV/c]", "#sigma(p_{T}^{jet}/p_{T}^{ref})", "Std. Dev. of JER vs pT, for all and leading jets");
     
-    // other plots
+    // other histogram plots
     //
     // ploth2d_1(hjerjt, "Probability", "P_{T} [GeV/c]", "Jet Energy Resolution","COLZ");
     // jer
@@ -623,24 +748,54 @@ void JER_A()
     // ploth1d_3(hgenpt, "genpt", hjtpt, "jtpt", hrefpt, "refpt", "pt", "Probability", "genpt, jtpt, and refpt Overlay");
     // ploth1d_2(hjtpt, "jtpt", hrefpt, "refpt", "pt", "Probability", "refpt & jtpt Overlay");
     
-    // graph plots
+    // other graph plots
+    //
     // plotg1d_1(gslicestddev1, "P_{T}^{ref}", "Std. Dev. of JER", "Standard Deviation of JER vs pT");
     // plotg1d_1(gslicemean1, "P_{T}^{ref}", "Mean of JER", "Mean of JER vs pT");
     
-    // plotting the slices
-    //
-    ploth1d_1(hslice0, "JER", "Probability", "80 < P_{T} < 90");
-    ploth1d_1(hslice1, "JER", "Probability", "90 < P_{T} < 100");
-    ploth1d_1(hslice2, "JER", "Probability", "100 < P_{T} < 110");
-    ploth1d_1(hslice3, "JER", "Probability", "110 < P_{T} < 120");
-    ploth1d_1(hslice4, "JER", "Probability", "120 < P_{T} < 130");
-    ploth1d_1(hslice5, "JER", "Probability", "130 < P_{T} < 140");
-    ploth1d_1(hslice6, "JER", "Probability", "140 < P_{T} < 150");
-    ploth1d_1(hslice7, "JER", "Probability", "150 < P_{T} < 180");
-    ploth1d_1(hslice8, "JER", "Probability", "180 < P_{T} < 220");
-    ploth1d_1(hslice9, "JER", "Probability", "220 < P_{T} < 300");
-    ploth1d_1(hslice10, "JER", "Probability", "300 < P_{T} < 500");
+    // these slice plots use a function that will try to save these plots as a .png file
 
+    // plotting the all jet slices
+    //
+    // ploth1d_1_s(hslice0, "All p_{T}^{jet}/p_{T}^{ref}", "80 < P_{T}^{all} < 90", 0);
+    // ploth1d_1_s(hslice1, "All p_{T}^{jet}/p_{T}^{ref}", "90 < P_{T}^{all} < 100", 1);
+    // ploth1d_1_s(hslice2, "All p_{T}^{jet}/p_{T}^{ref}", "100 < P_{T}^{all} < 110", 2);
+    // ploth1d_1_s(hslice3, "All p_{T}^{jet}/p_{T}^{ref}", "110 < P_{T}^{all} < 120", 3);
+    // ploth1d_1_s(hslice4, "All p_{T}^{jet}/p_{T}^{ref}", "120 < P_{T}^{all} < 130", 4);
+    // ploth1d_1_s(hslice5, "All p_{T}^{jet}/p_{T}^{ref}", "130 < P_{T}^{all} < 140", 5);
+    // ploth1d_1_s(hslice6, "All p_{T}^{jet}/p_{T}^{ref}", "140 < P_{T}^{all} < 150", 6);
+    // ploth1d_1_s(hslice7, "All p_{T}^{jet}/p_{T}^{ref}", "150 < P_{T}^{all} < 180", 7);
+    // ploth1d_1_s(hslice8, "All p_{T}^{jet}/p_{T}^{ref}", "180 < P_{T}^{all} < 220", 8);
+    // ploth1d_1_s(hslice9, "All p_{T}^{jet}/p_{T}^{ref}", "220 < P_{T}^{all} < 300", 9);
+    // ploth1d_1_s(hslice10, "All p_{T}^{jet}/p_{T}^{ref}", "300 < P_{T}^{all} < 500", 10);
+
+    // plotting the leading jet slices
+    //
+    // ploth1d_1_s(hlslice0, "Leading p_{T}^{jet}/p_{T}^{ref}", "80 < P_{T}^{leading} < 90", 0);
+    // ploth1d_1_s(hlslice1, "Leading p_{T}^{jet}/p_{T}^{ref}", "90 < P_{T}^{leading} < 100", 1);
+    // ploth1d_1_s(hlslice2, "Leading p_{T}^{jet}/p_{T}^{ref}", "100 < P_{T}^{leading} < 110", 2);
+    // ploth1d_1_s(hlslice3, "Leading p_{T}^{jet}/p_{T}^{ref}", "110 < P_{T}^{leading} < 120", 3);
+    // ploth1d_1_s(hlslice4, "Leading p_{T}^{jet}/p_{T}^{ref}", "120 < P_{T}^{leading} < 130", 4);
+    // ploth1d_1_s(hlslice5, "Leading p_{T}^{jet}/p_{T}^{ref}", "130 < P_{T}^{leading} < 140", 5);
+    // ploth1d_1_s(hlslice6, "Leading p_{T}^{jet}/p_{T}^{ref}", "140 < P_{T}^{leading} < 150", 6);
+    // ploth1d_1_s(hlslice7, "Leading p_{T}^{jet}/p_{T}^{ref}", "150 < P_{T}^{leading} < 180", 7);
+    // ploth1d_1_s(hlslice8, "Leading p_{T}^{jet}/p_{T}^{ref}", "180 < P_{T}^{leading} < 220", 8);
+    // ploth1d_1_s(hlslice9, "Leading p_{T}^{jet}/p_{T}^{ref}", "220 < P_{T}^{leading} < 300", 9);
+    // ploth1d_1_s(hlslice10, "Leading p_{T}^{jet}/p_{T}^{ref}", "300 < P_{T}^{leading} < 500", 10);
+
+    // Saving the slice histograms as .png files in a folder called plots within the same file path as this code
+
+    
+    // PRINT STATEMENTS
+    // // expressing passed/total as a percent
+    // float p = b_/a_*100;
+    //
+    // // printing out the info of interest
+    // cout<<"the following values were found by looking through "<< n << " root files" << endl;
+    // cout<<"number of total events: "<< a_ << endl;
+    // cout<<"number of passed events: "<< b_ << endl;
+    // cout<<"percent of passed events: "<< p <<"%"<< endl;
+    //
     // determining the final time of the script
     clock_t tf = clock();
     // printing out the time between ti and tf in seconds
